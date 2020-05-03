@@ -27,10 +27,22 @@ const FIREBASE_CONFIG = {
 class App extends React.Component {
   firebase = global.firebase;
 
+  state = {
+    init: false
+  };
+
   componentWillMount() {
     // Initialize Firebase
-    this.firebase.initializeApp(FIREBASE_CONFIG);
-    this.firebase.analytics();
+    if (!this.state.init) {
+      this.firebase.initializeApp(FIREBASE_CONFIG);
+      this.firebase.analytics();
+      this.setState({ init: true });
+    }
+  }
+
+  componentDidMount() {
+    const urlParams = new URLSearchParams(window.location.search);
+    this.username = urlParams.get("username");
   }
 
   render = () => (
@@ -77,21 +89,21 @@ class App extends React.Component {
                 alignItems: "center",
                 justifyContent: "center"
               }}>
-                <Link to="/log">
+                <Link to={`/log${window.location.search}`}>
                   <View style={{ height: "100%", paddingHorizontal: 10, width: 70 }}>
                     <Text style={{ color: "#999999", fontSize: 14 }}>
                       Log
                     </Text>
                   </View>
                 </Link>
-                <Link to="/">
+                <Link to={`/${window.location.search}`}>
                   <View style={{ height: "100%", paddingHorizontal: 10, width: 70 }}>
                     <Text style={{ color: "#999999", fontSize: 14 }}>
                       Focus
                     </Text>
                   </View>
                 </Link>
-                <Link to="/goals">
+                <Link to={`/goals${window.location.search}`}>
                   <View style={{ height: "100%", paddingHorizontal: 10, width: 70 }}>
                     <Text style={{ color: "#999999", fontSize: 14 }}>
                       Goals
@@ -110,7 +122,10 @@ class App extends React.Component {
     const dateFormat = "DD MM YYYY";
     if (this.firebase) {
       const startedBlocks = [];
-      const snapshot = await this.firebase.firestore().collection("blocks").get();
+      const collection = this.firebase.firestore().collection("blocks");
+      const snapshot = await (this.username
+        ? collection.where("username", "==", this.username).get()
+        : collection.get());
       snapshot.forEach(doc => startedBlocks.push({ id: doc.id, ...doc.data() }));
       console.log(`Log: Fetched ${startedBlocks.length} blocks`, startedBlocks);
       const earnedBlocks = startedBlocks
@@ -125,7 +140,10 @@ class App extends React.Component {
   _fetchGoals = async () => {
     if (this.firebase) {
       const goals = [];
-      const snapshot = await this.firebase.firestore().collection("goals").get();
+      const collection = this.firebase.firestore().collection("goals");
+      const snapshot = await (this.username
+        ? collection.where("username", "==", this.username).get()
+        : collection.get());
       snapshot.forEach(doc => goals.push({ id: doc.id, ...doc.data() }));
       console.log(`Log: Fetched ${goals.length} goals`, goals);
       return goals;
@@ -134,8 +152,14 @@ class App extends React.Component {
   }
 
   _addTimeBlock = block => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const username = urlParams.get("username");
     if (this.firebase) {
-      this.firebase.firestore().collection("blocks").add(block);
+      this.firebase.firestore().collection("blocks").add({
+        ...block,
+        completed: true,
+        username
+      });
     }
   }
 
@@ -144,7 +168,7 @@ class App extends React.Component {
       await this.firebase.firestore()
         .collection("goals")
         .doc(goal.id)
-        .update(goal);
+        .update({ ...goal, username: this.username });
     }
   }
 }

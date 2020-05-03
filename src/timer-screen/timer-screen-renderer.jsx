@@ -3,7 +3,7 @@ import { View, Text, TouchableOpacity } from "react-native";
 import Timer from "../components/timer";
 import TimeBlocks from "../components/time-blocks";
 import GoalUtils from "../utils/goal-utils";
-import { Link } from "react-router-dom";
+import { Link , useLocation } from "react-router-dom";
 
 const isDistracted = false;
 
@@ -40,7 +40,7 @@ const TimerScreenRenderer = ({
 
       <View style={{ display: "flex", flexDirection: "row", justifyContent: "center", alignItems: "center", marginTop: 10 }}>
         <Text style={{ color: "#999999" }}>Today's Goal ( </Text>
-        <Link to="/goals" style={{ marginBottom: 5 }}>
+        <Link to={`/goals${useLocation().search}`} style={{ marginBottom: 5 }}>
           <Text style={{ color: "rgb(209,63,87)",  }}>
             Set
           </Text>
