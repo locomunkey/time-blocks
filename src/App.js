@@ -157,7 +157,6 @@ class App extends React.Component {
     if (this.firebase) {
       this.firebase.firestore().collection("blocks").add({
         ...block,
-        completed: true,
         username
       });
     }
