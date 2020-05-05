@@ -27,17 +27,10 @@ const FIREBASE_CONFIG = {
 class App extends React.Component {
   firebase = global.firebase;
 
-  state = {
-    init: false
-  };
-
   componentWillMount() {
     // Initialize Firebase
-    if (!this.state.init) {
-      this.firebase.initializeApp(FIREBASE_CONFIG);
-      this.firebase.analytics();
-      this.setState({ init: true });
-    }
+    this.firebase.initializeApp(FIREBASE_CONFIG);
+    this.firebase.analytics();
   }
 
   componentDidMount() {
