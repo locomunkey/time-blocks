@@ -33,11 +33,6 @@ class App extends React.Component {
     this.firebase.analytics();
   }
 
-  componentDidMount() {
-    const urlParams = new URLSearchParams(window.location.search);
-    this.username = urlParams.get("username");
-  }
-
   render = () => (
     <AppContext.Provider value={{
       remoteService: {
@@ -49,7 +44,7 @@ class App extends React.Component {
     }}>
       <div className="App">
         <div className="App-header">
-          <Router>
+          <Router basename="time-blocks">
             <View style={{ height: Dimensions.get("window").height - 60, width: "100%", display: "flex", alignItems: "center" }}>
               <Switch>
                 <Route path="/log">
@@ -82,7 +77,7 @@ class App extends React.Component {
                 alignItems: "center",
                 justifyContent: "center"
               }}>
-                <Link to={`/log${window.location.search}`}>
+                <Link to={`log${window.location.search}`}>
                   <View style={{ height: "100%", paddingHorizontal: 10, width: 70 }}>
                     <Text style={{ color: "#999999", fontSize: 14 }}>
                       Log
@@ -96,7 +91,7 @@ class App extends React.Component {
                     </Text>
                   </View>
                 </Link>
-                <Link to={`/goals${window.location.search}`}>
+                <Link to={`goals${window.location.search}`}>
                   <View style={{ height: "100%", paddingHorizontal: 10, width: 70 }}>
                     <Text style={{ color: "#999999", fontSize: 14 }}>
                       Goals
@@ -114,18 +109,20 @@ class App extends React.Component {
   _fetchBlocks = async () => {
     const dateFormat = "DD MM YYYY";
     if (this.firebase) {
-      const startedBlocks = [];
+      const blocks = [];
       const collection = this.firebase.firestore().collection("blocks");
-      const snapshot = await (this.username
-        ? collection.where("username", "==", this.username).get()
+      const username = this._getUsername();
+      const snapshot = await (username
+        ? collection.where("username", "==", username).get()
         : collection.get());
-      snapshot.forEach(doc => startedBlocks.push({ id: doc.id, ...doc.data() }));
-      console.log(`Log: Fetched ${startedBlocks.length} blocks`, startedBlocks);
-      const earnedBlocks = startedBlocks
-        .filter(block => moment(moment(block.startTime).format(dateFormat)).isSame(moment().format(dateFormat)))
-        .filter(block => block.completed);
+      snapshot.forEach(doc => blocks.push({ id: doc.id, ...doc.data() }));
+      console.log(`Log: Fetched ${blocks.length} blocks`, blocks);
+      const todaysBlocks = blocks
+        .filter(block => moment(moment(block.startTime).format(dateFormat)).isSame(moment().format(dateFormat)));
+      const startedBlocks = blocks.filter(block => !block.completed);
+      const earnedBlocks = blocks.filter(block => block.completed);
       console.log(`Log: Filtered ${earnedBlocks.length} earned blocks`, earnedBlocks);
-      return { startedBlocks, earnedBlocks };
+      return { startedBlocks, earnedBlocks, todaysBlocks };
     }
     return null;
   }
@@ -134,8 +131,9 @@ class App extends React.Component {
     if (this.firebase) {
       const goals = [];
       const collection = this.firebase.firestore().collection("goals");
-      const snapshot = await (this.username
-        ? collection.where("username", "==", this.username).get()
+      const username = this._getUsername();
+      const snapshot = await (username
+        ? collection.where("username", "==", username).get()
         : collection.get());
       snapshot.forEach(doc => goals.push({ id: doc.id, ...doc.data() }));
       console.log(`Log: Fetched ${goals.length} goals`, goals);
@@ -145,8 +143,7 @@ class App extends React.Component {
   }
 
   _addTimeBlock = block => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const username = urlParams.get("username");
+    const username = this._getUsername();
     if (this.firebase) {
       this.firebase.firestore().collection("blocks").add({
         ...block,
@@ -157,11 +154,17 @@ class App extends React.Component {
 
   _updateGoal = async goal => {
     if (this.firebase) {
+      const username = this._getUsername();
       await this.firebase.firestore()
         .collection("goals")
         .doc(goal.id)
-        .update({ ...goal, username: this.username });
+        .update({ ...goal, username: username });
     }
+  }
+
+  _getUsername = () => {
+    const urlParams = new URLSearchParams(window.location.search);
+    return urlParams.get("username");
   }
 }
 

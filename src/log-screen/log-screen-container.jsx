@@ -42,7 +42,7 @@ class LogScreenContainer extends React.Component {
   _fetchGoal = async () => {
     const { remoteService } = this.props;
     const goals = await remoteService.fetchGoals();
-    if (goals && goals.length) {
+    if (goals && goals.length > 0) {
       this.setState({ goal: goals[0] });
     }
   };

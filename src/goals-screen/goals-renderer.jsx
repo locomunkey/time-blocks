@@ -36,113 +36,119 @@ export class GoalsScreenRenderer extends React.Component {
     const { goalMode, goal, onChangeGoalMode, onSaveGoal } = this.props;
     return (
       <TouchableWithoutFeedback onPress={() => onChangeGoalMode(null)}>
-        <View style={styles.container}>
-          <Text style={styles.titleText}>Goals</Text>
-          <BlurContent blur={goalMode !== GoalMode.Everyday}>
-            <TouchableWithoutFeedback onPress={() => this._onClickSection(GoalMode.Everyday)}>
-              <View style={styles.form}>
-                <View style={styles.formLabel}>
-                  <Text style={styles.text}>Everyday</Text>
-                </View>
-                <View style={styles.formInput}>
-                  {this._renderTextInput(
-                    goal.everyday,
-                    GoalMode.Everyday,
-                    e => this._onSetValue(e, "everyday"),
-                    true /* shouldAutoFocus */
-                  )}
-                </View>
-                <TouchableHighlight
-                  style={styles.clearButton}
-                  onPress={this._onClearEveryday}
-                >
-                  <Text style={styles.text}>Clear</Text>
-                </TouchableHighlight>
-              </View>
-            </TouchableWithoutFeedback>
-          </BlurContent>
+        <View style={{ width: "100%" }}>
+          <Text style={{ color: "rgb(204, 204, 204)", fontSize: 30, textAlign: "center", marginVertical: 15, marginHorizontal: 40, fontWeight: "bold" }}>
+            Log
+          </Text>
+          <View style={{ paddingTop: 10, width: "100%", display: "flex", alignItems: "center", marginHorizontal: 5 }}>
+            <View style={{ maxWidth: 267, height: "100%", width: "100%" }}>
+              <BlurContent blur={goalMode !== GoalMode.Everyday}>
+                <TouchableWithoutFeedback onPress={() => this._onClickSection(GoalMode.Everyday)}>
+                  <View style={styles.form}>
+                    <View style={styles.formLabel}>
+                      <Text style={styles.text}>Everyday</Text>
+                    </View>
+                    <View style={styles.formInput}>
+                      {this._renderTextInput(
+                        goal.everyday,
+                        GoalMode.Everyday,
+                        e => this._onSetValue(e, "everyday"),
+                        true /* shouldAutoFocus */
+                      )}
+                    </View>
+                    <TouchableHighlight
+                      style={styles.clearButton}
+                      onPress={this._onClearEveryday}
+                    >
+                      <Text style={styles.text}>Clear</Text>
+                    </TouchableHighlight>
+                  </View>
+                </TouchableWithoutFeedback>
+              </BlurContent>
 
-          <View style={{ marginTop: 10, marginBottom: 10 }}>
-            <Text>OR</Text>
+              <View style={{ marginTop: 10, marginBottom: 10 }}>
+                <Text>OR</Text>
+              </View>
+
+              <BlurContent blur={goalMode !== GoalMode.WeekdayWeekEnd}>
+                <TouchableWithoutFeedback onPress={() => this._onClickSection(GoalMode.WeekdayWeekEnd)}>
+                  <View>
+                    <View style={styles.form}>
+                      <View style={styles.formLabel}>
+                        <Text style={styles.text}>Weekdays</Text>
+                      </View>
+                      <View style={styles.formInput}>
+                        {this._renderTextInput(
+                          goal.weekdays,
+                          GoalMode.WeekdayWeekEnd,
+                          e => this._onSetValue(e, "weekdays"),
+                          true /* shouldAutoFocus */
+                        )}
+                      </View>
+                      <TouchableHighlight
+                        style={styles.clearButton}
+                        onPress={this._onClearWeekdays}
+                      >
+                        <Text style={styles.text}>Clear</Text>
+                      </TouchableHighlight>
+                    </View>
+                    <View style={styles.form}>
+                      <View style={styles.formLabel}>
+                        <Text style={styles.text}>Weekends</Text>
+                      </View>
+                      <View style={styles.formInput}>
+                        {this._renderTextInput(
+                          goal.weekends,
+                          GoalMode.WeekdayWeekEnd,
+                          e => this._onSetValue(e, "weekends")
+                        )}
+                      </View>
+                      <TouchableHighlight
+                        style={styles.clearButton}
+                        onPress={this._onClearWeekends}
+                      >
+                        <Text style={styles.text}>Clear</Text>
+                      </TouchableHighlight>
+                    </View>
+                  </View>
+                </TouchableWithoutFeedback>
+              </BlurContent>
+
+              <View style={{ width: "100%", height: 1, borderBottom: "1px solid black", marginTop: 10 }} />
+
+              <TouchableWithoutFeedback onPress={() => this._onClickSection(GoalMode.Custom)}>
+                <View>
+                  <View style={{ display: "flex", flexDirection: "row", marginVertical: 10, justifyContent: "center", position: "relative" }}>
+                    <Text style={styles.text}>Set Goals</Text>
+                    <TouchableHighlight
+                      style={{ position: "absolute", right: 0, width: "20%" }}
+                      onPress={this._onClearCustom}
+                    >
+                      <Text style={styles.text}>Clear</Text>
+                    </TouchableHighlight>
+                  </View>
+                  <View>
+                  {this._renderDay("mon", true)}
+                  {this._renderDay("tue")}
+                  {this._renderDay("wed")}
+                  {this._renderDay("thu")}
+                  {this._renderDay("fri")}
+                  {this._renderDay("sat")}
+                  {this._renderDay("sun")}
+                  </View>
+                </View>
+              </TouchableWithoutFeedback>
+
+              <TouchableHighlight style={{ marginVertical: 30 }} onPress={onSaveGoal}>
+                <View style={{ backgroundColor: "rgb(209,63,87)", paddingVertical: 5 }}>
+                  <Text style={styles.text}>Save</Text>
+                </View>
+              </TouchableHighlight>
+            </View>
           </View>
-
-          <BlurContent blur={goalMode !== GoalMode.WeekdayWeekEnd}>
-            <TouchableWithoutFeedback onPress={() => this._onClickSection(GoalMode.WeekdayWeekEnd)}>
-              <View>
-                <View style={styles.form}>
-                  <View style={styles.formLabel}>
-                    <Text style={styles.text}>Weekdays</Text>
-                  </View>
-                  <View style={styles.formInput}>
-                    {this._renderTextInput(
-                      goal.weekdays,
-                      GoalMode.WeekdayWeekEnd,
-                      e => this._onSetValue(e, "weekdays"),
-                      true /* shouldAutoFocus */
-                    )}
-                  </View>
-                  <TouchableHighlight
-                    style={styles.clearButton}
-                    onPress={this._onClearWeekdays}
-                  >
-                    <Text style={styles.text}>Clear</Text>
-                  </TouchableHighlight>
-                </View>
-                <View style={styles.form}>
-                  <View style={styles.formLabel}>
-                    <Text style={styles.text}>Weekends</Text>
-                  </View>
-                  <View style={styles.formInput}>
-                    {this._renderTextInput(
-                      goal.weekends,
-                      GoalMode.WeekdayWeekEnd,
-                      e => this._onSetValue(e, "weekends")
-                    )}
-                  </View>
-                  <TouchableHighlight
-                    style={styles.clearButton}
-                    onPress={this._onClearWeekends}
-                  >
-                    <Text style={styles.text}>Clear</Text>
-                  </TouchableHighlight>
-                </View>
-              </View>
-            </TouchableWithoutFeedback>
-          </BlurContent>
-
-          <View style={{ width: "100%", height: 1, borderBottom: "1px solid black", marginTop: 10 }} />
-
-          <TouchableWithoutFeedback onPress={() => this._onClickSection(GoalMode.Custom)}>
-            <View>
-              <View style={{ display: "flex", flexDirection: "row", marginVertical: 10, justifyContent: "center", position: "relative" }}>
-                <Text style={styles.text}>Set Goals</Text>
-                <TouchableHighlight
-                  style={{ position: "absolute", right: 0, width: "20%" }}
-                  onPress={this._onClearCustom}
-                >
-                  <Text style={styles.text}>Clear</Text>
-                </TouchableHighlight>
-              </View>
-              <View>
-              {this._renderDay("mon", true)}
-              {this._renderDay("tue")}
-              {this._renderDay("wed")}
-              {this._renderDay("thu")}
-              {this._renderDay("fri")}
-              {this._renderDay("sat")}
-              {this._renderDay("sun")}
-              </View>
-            </View>
-          </TouchableWithoutFeedback>
-
-          <TouchableHighlight style={{ marginVertical: 30 }} onPress={onSaveGoal}>
-            <View style={{ backgroundColor: "rgb(209,63,87)", paddingVertical: 5 }}>
-              <Text style={styles.text}>Save</Text>
-            </View>
-          </TouchableHighlight>
         </View>
       </TouchableWithoutFeedback>
-    )
+    );
   }
 
   _onClearEveryday = () => {
@@ -341,3 +347,113 @@ const styles = StyleSheet.create({
     color: "white"
   }
 });
+
+// return (
+//   <TouchableWithoutFeedback onPress={() => onChangeGoalMode(null)}>
+//     <View style={styles.container}>
+//       <Text style={styles.titleText}>Goals</Text>
+//       <BlurContent blur={goalMode !== GoalMode.Everyday}>
+//         <TouchableWithoutFeedback onPress={() => this._onClickSection(GoalMode.Everyday)}>
+//           <View style={styles.form}>
+//             <View style={styles.formLabel}>
+//               <Text style={styles.text}>Everyday</Text>
+//             </View>
+//             <View style={styles.formInput}>
+//               {this._renderTextInput(
+//                 goal.everyday,
+//                 GoalMode.Everyday,
+//                 e => this._onSetValue(e, "everyday"),
+//                 true /* shouldAutoFocus */
+//               )}
+//             </View>
+//             <TouchableHighlight
+//               style={styles.clearButton}
+//               onPress={this._onClearEveryday}
+//             >
+//               <Text style={styles.text}>Clear</Text>
+//             </TouchableHighlight>
+//           </View>
+//         </TouchableWithoutFeedback>
+//       </BlurContent>
+
+//       <View style={{ marginTop: 10, marginBottom: 10 }}>
+//         <Text>OR</Text>
+//       </View>
+
+//       <BlurContent blur={goalMode !== GoalMode.WeekdayWeekEnd}>
+//         <TouchableWithoutFeedback onPress={() => this._onClickSection(GoalMode.WeekdayWeekEnd)}>
+//           <View>
+//             <View style={styles.form}>
+//               <View style={styles.formLabel}>
+//                 <Text style={styles.text}>Weekdays</Text>
+//               </View>
+//               <View style={styles.formInput}>
+//                 {this._renderTextInput(
+//                   goal.weekdays,
+//                   GoalMode.WeekdayWeekEnd,
+//                   e => this._onSetValue(e, "weekdays"),
+//                   true /* shouldAutoFocus */
+//                 )}
+//               </View>
+//               <TouchableHighlight
+//                 style={styles.clearButton}
+//                 onPress={this._onClearWeekdays}
+//               >
+//                 <Text style={styles.text}>Clear</Text>
+//               </TouchableHighlight>
+//             </View>
+//             <View style={styles.form}>
+//               <View style={styles.formLabel}>
+//                 <Text style={styles.text}>Weekends</Text>
+//               </View>
+//               <View style={styles.formInput}>
+//                 {this._renderTextInput(
+//                   goal.weekends,
+//                   GoalMode.WeekdayWeekEnd,
+//                   e => this._onSetValue(e, "weekends")
+//                 )}
+//               </View>
+//               <TouchableHighlight
+//                 style={styles.clearButton}
+//                 onPress={this._onClearWeekends}
+//               >
+//                 <Text style={styles.text}>Clear</Text>
+//               </TouchableHighlight>
+//             </View>
+//           </View>
+//         </TouchableWithoutFeedback>
+//       </BlurContent>
+
+//       <View style={{ width: "100%", height: 1, borderBottom: "1px solid black", marginTop: 10 }} />
+
+//       <TouchableWithoutFeedback onPress={() => this._onClickSection(GoalMode.Custom)}>
+//         <View>
+//           <View style={{ display: "flex", flexDirection: "row", marginVertical: 10, justifyContent: "center", position: "relative" }}>
+//             <Text style={styles.text}>Set Goals</Text>
+//             <TouchableHighlight
+//               style={{ position: "absolute", right: 0, width: "20%" }}
+//               onPress={this._onClearCustom}
+//             >
+//               <Text style={styles.text}>Clear</Text>
+//             </TouchableHighlight>
+//           </View>
+//           <View>
+//           {this._renderDay("mon", true)}
+//           {this._renderDay("tue")}
+//           {this._renderDay("wed")}
+//           {this._renderDay("thu")}
+//           {this._renderDay("fri")}
+//           {this._renderDay("sat")}
+//           {this._renderDay("sun")}
+//           </View>
+//         </View>
+//       </TouchableWithoutFeedback>
+
+//       <TouchableHighlight style={{ marginVertical: 30 }} onPress={onSaveGoal}>
+//         <View style={{ backgroundColor: "rgb(209,63,87)", paddingVertical: 5 }}>
+//           <Text style={styles.text}>Save</Text>
+//         </View>
+//       </TouchableHighlight>
+//     </View>
+//   </TouchableWithoutFeedback>
+// )

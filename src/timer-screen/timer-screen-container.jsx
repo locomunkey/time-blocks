@@ -3,7 +3,6 @@ import moment from "moment";
 import TimerScreenRenderer from "./timer-screen-renderer";
 import TimeBlocks from "../components/time-blocks";
 import AppContext from "../app-context";
-import GoalUtils from "../utils/goal-utils";
 
 class TimerScreenContainer extends React.Component {
   state = {
@@ -17,6 +16,7 @@ class TimerScreenContainer extends React.Component {
     setMinutes: 0,
     setSeconds: 0,
     earnedBlocks: [],
+    goal: null,
     // Below not used
     dHours: 0,
     dMinutes: 0,
@@ -41,7 +41,7 @@ class TimerScreenContainer extends React.Component {
     return (
       <TimerScreenRenderer
         onTimerStart={this._startBlock}
-        onTimerStop={() => this._endBlock()}
+        onTimerStop={() => this._endBlock(false /* completed */, true /* stopped */)}
         onTimerTick={this._onTimerTick}
         onTimerModify={this._onTimerModify}
         onTimerFinish={this._onTimerFinish}
@@ -57,9 +57,9 @@ class TimerScreenContainer extends React.Component {
 
   _fetchBlocks = async () => {
     const { remoteService } = this.props;
-    const { earnedBlocks } = await remoteService.fetchBlocks();
-    if (earnedBlocks) {
-      this.setState({ earnedBlocks });
+    const { todaysBlocks } = await remoteService.fetchBlocks();
+    if (todaysBlocks) {
+      this.setState({ earnedBlocks: todaysBlocks.filter(block => block.completed) });
     }
   };
 
@@ -90,7 +90,7 @@ class TimerScreenContainer extends React.Component {
     }
   };
 
-  _endBlock = (completed = false) => {
+  _endBlock = (completed = false, stopped = false) => {
     const {
       hours,
       minutes,
@@ -104,7 +104,8 @@ class TimerScreenContainer extends React.Component {
       hours,
       59 - minutes,
       59 - seconds,
-      completed
+      completed,
+      stopped
     );
   };
 
@@ -129,12 +130,12 @@ class TimerScreenContainer extends React.Component {
     setSeconds: seconds
   });
 
-  _onTimerFinish = () => this._endBlock(true);
+  _onTimerFinish = () => this._endBlock(true /* completed */, false /* stopped */);
 
   _renderEarnedBlocks = blocks => <TimeBlocks blocks={blocks} />;
 
-  _logTimeBlock = (elapsedHours, elapsedMinutes, elapsedSeconds, completed = false) => {
-    const { setHours, setMinutes, setSeconds, currentBlock } = this.state;
+  _logTimeBlock = (elapsedHours, elapsedMinutes, elapsedSeconds, completed = false, stopped=false) => {
+    const { setHours, setMinutes, setSeconds, currentBlock, goal } = this.state;
     const { remoteService } = this.props;
     if (remoteService) {
       remoteService.addTimeBlock({
@@ -145,9 +146,11 @@ class TimerScreenContainer extends React.Component {
         elapsedHours,
         elapsedMinutes,
         elapsedSeconds,
+        goal,
         endTime: moment().toISOString(),
         distractions: this.state.distractions,
-        completed
+        completed,
+        stopped
       });
     }
   };

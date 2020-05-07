@@ -48,7 +48,7 @@ const TimerScreenRenderer = ({
         <Text style={{ color: "#999999" }}> )</Text>
       </View>
 
-      <View style={{ display: "flex", flexDirection: "row", height: 50 }}>
+      <View style={{ display: "flex", height: 50, justifyContent: "center", alignItems: "center" }}>
         {
           (running || isDistracted) || (GoalUtils.getTodaysBlockGoal(goal) !== 0)
             ? (

@@ -27,16 +27,16 @@ const TimeBlock = ({ block, isGoal }) => block && !block.completed
     }} />
   );
 
-const TimeBlocks = ({ earnedBlocks, currentBlock, goal, blockGoalCount }) => {
+const TimeBlocks = ({ earnedBlocks, currentBlock, goal }) => {
   const blockGoal = Math.max(
-    (blockGoalCount || GoalUtils.getTodaysBlockGoal(goal)) - earnedBlocks.length - (currentBlock ? 1 : 0),
+    GoalUtils.getTodaysBlockGoal(goal) - earnedBlocks.length - (currentBlock ? 1 : 0),
     0
   );
   return (
-    <View style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", flexDirection: "row", marginTop: 15, width: "100%" }}>
+    <View style={{ display: "flex", flexWrap: "wrap", flexDirection: "row" }}>
       {earnedBlocks.map(block => <TimeBlock block={block} />)}
       {currentBlock && <TimeBlock block={currentBlock} isGoal={blockGoal - 1 > 0} />}
-      {Array.from(new Array(blockGoal)).map(() => <TimeBlock isGoal/>)}
+      {Array.from(new Array(blockGoal)).map(() => <TimeBlock isGoal />)}
     </View>
   );
 };

@@ -76,6 +76,7 @@ class GoalsScreenContainer extends React.Component {
   _onSaveGoal = () => {
     const { remoteService } = this.props;
     if (remoteService) {
+      console.log("Devan", this._getCurrentGoal())
       remoteService.updateGoal(this._getCurrentGoal())
     }
   }
