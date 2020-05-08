@@ -121,6 +121,7 @@ class App extends React.Component {
         .filter(block => moment(moment(block.startTime).format(dateFormat)).isSame(moment().format(dateFormat)));
       const startedBlocks = blocks.filter(block => !block.completed);
       const earnedBlocks = blocks.filter(block => block.completed);
+      console.log(`Log: Filtered ${startedBlocks.length} started blocks`, startedBlocks);
       console.log(`Log: Filtered ${earnedBlocks.length} earned blocks`, earnedBlocks);
       return { startedBlocks, earnedBlocks, todaysBlocks };
     }
