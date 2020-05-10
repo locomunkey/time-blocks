@@ -1,17 +1,20 @@
 import React from "react";
-import { View, Text, Dimensions }from "react-native";
+import { View, Text, Dimensions, TouchableOpacity }from "react-native";
 import moment from "moment";
 import {
   BrowserRouter as Router,
   Switch,
   Route,
-  Link
+  Link,
+  Redirect
 } from "react-router-dom";
 import './App.css';
+import AppContext from "./app-context";
 import { TimerScreen } from "./timer-screen";
 import { GoalsScreen } from "./goals-screen";
 import { LogScreen } from "./log-screen";
-import AppContext from "./app-context";
+import { AuthScreen } from "./auth-screen";
+import { SettingsScreen } from "./settings-screen";
 
 const FIREBASE_CONFIG = {
   apiKey: "AIzaSyCBZrwH6IoMDo-jW2Ydu00z0FJMK3wQdTI",
@@ -24,96 +27,23 @@ const FIREBASE_CONFIG = {
   measurementId: "G-92KBT48GWG"
 };
 
-class App extends React.Component {
+class FirebaseService {
   firebase = global.firebase;
 
-  componentWillMount() {
+  constructor(config, username = null) {
     // Initialize Firebase
-    this.firebase.initializeApp(FIREBASE_CONFIG);
+    this.firebase.initializeApp(config);
     this.firebase.analytics();
+    this.username = username;
   }
 
-  render = () => (
-    <AppContext.Provider value={{
-      remoteService: {
-        fetchBlocks: this._fetchBlocks,
-        fetchGoals: this._fetchGoals,
-        updateGoal: this._updateGoal,
-        addTimeBlock: this._addTimeBlock
-      }
-    }}>
-      <div className="App">
-        <div className="App-header">
-          <Router basename="time-blocks">
-            <View style={{ height: Dimensions.get("window").height - 60, width: "100%", display: "flex", alignItems: "center" }}>
-              <Switch>
-                <Route path="/log">
-                  <LogScreen />
-                </Route>
-                <Route path="/goals">
-                  <GoalsScreen />
-                </Route>
-                <Route path="/">
-                  <TimerScreen />
-                </Route>
-              </Switch>
-            </View>
-            <View style={{
-              borderTop: "1px solid rgb(38,38,38)",
-              width: "100%",
-              position: "absolute",
-              bottom: 0,
-              backgroundColor: "black",
-              height: 60,
-              display: "flex",
-              alignItems: "center"
-            }}>
-              <View style={{
-                width: "100%",
-                height: "100%",
-                // maxWidth: 267,
-                display: "flex",
-                flexDirection: "row",
-                alignItems: "center",
-                justifyContent: "center"
-              }}>
-                <Link to={`log${window.location.search}`}>
-                  <View style={{ height: "100%", paddingHorizontal: 10, width: 70 }}>
-                    <Text style={{ color: "#999999", fontSize: 14 }}>
-                      Log
-                    </Text>
-                  </View>
-                </Link>
-                <Link to={`/${window.location.search}`}>
-                  <View style={{ height: "100%", paddingHorizontal: 10, width: 70 }}>
-                    <Text style={{ color: "#999999", fontSize: 14 }}>
-                      Focus
-                    </Text>
-                  </View>
-                </Link>
-                <Link to={`goals${window.location.search}`}>
-                  <View style={{ height: "100%", paddingHorizontal: 10, width: 70 }}>
-                    <Text style={{ color: "#999999", fontSize: 14 }}>
-                      Goals
-                    </Text>
-                  </View>
-                </Link>
-              </View>
-            </View>
-          </Router>
-        </div>
-      </div>
-    </AppContext.Provider>
-  );
-
-  _fetchBlocks = async () => {
+  fetchBlocks = async () => {
     const dateFormat = "DD MM YYYY";
-    if (this.firebase) {
+    if (this.firebase && this.username) {
       const blocks = [];
-      const collection = this.firebase.firestore().collection("blocks");
-      const username = this._getUsername();
-      const snapshot = await (username
-        ? collection.where("username", "==", username).get()
+      const collection = this.firebase.firestore().collection("blocks")
+      const snapshot = await (this.username
+        ? collection.where("username", "==", this.username).get()
         : collection.get());
       snapshot.forEach(doc => blocks.push({ id: doc.id, ...doc.data() }));
       console.log(`Log: Fetched ${blocks.length} blocks`, blocks);
@@ -126,47 +56,298 @@ class App extends React.Component {
       return { startedBlocks, earnedBlocks, todaysBlocks };
     }
     return null;
-  }
+  };
 
-  _fetchGoals = async () => {
-    if (this.firebase) {
+  fetchGoals = async () => {
+    if (this.firebase && this.username) {
       const goals = [];
-      const collection = this.firebase.firestore().collection("goals");
-      const username = this._getUsername();
-      const snapshot = await (username
-        ? collection.where("username", "==", username).get()
+      const collection = this.firebase.firestore().collection("goals")
+      const snapshot = await (this.username
+        ? collection.where("username", "==", this.username).get()
         : collection.get());
-      snapshot.forEach(doc => goals.push({ id: doc.id, ...doc.data() }));
+      snapshot.forEach(doc => goals.push({ ...doc.data(), id: doc.id }));
       console.log(`Log: Fetched ${goals.length} goals`, goals);
       return goals;
     }
     return null;
-  }
+  };
 
-  _addTimeBlock = block => {
-    const username = this._getUsername();
-    if (this.firebase) {
-      this.firebase.firestore().collection("blocks").add({
-        ...block,
-        username
-      });
+  addTimeBlock = block => {
+    if (this.firebase && this.username) {
+      this.firebase.firestore()
+        .collection("blocks")
+        .add({
+          ...block,
+          username: this.username
+        });
+    }
+  };
+
+  addGoal = async goal => {
+    if (this.firebase && this.username) {
+      await this.firebase.firestore()
+        .collection("goals")
+        .add({ ...goal, username: this.username });
     }
   }
 
-  _updateGoal = async goal => {
-    if (this.firebase) {
-      const username = this._getUsername();
+  updateGoal = async goal => {
+    if (this.firebase && this.username) {
       await this.firebase.firestore()
         .collection("goals")
         .doc(goal.id)
-        .update({ ...goal, username: username });
+        .update({ ...goal, username: this.username });
+    }
+  };
+
+  setCurrentUser = user => {
+    if (user) {
+      this.user = user;
+      this.username = user.uid;
+    }
+  };
+}
+
+class AuthService {
+  firebase = global.firebase;
+  operations = {
+    SignIn: "SignIn",
+    SignUp: "SignUp"
+  };
+  signInListeners = [];
+  signUpListeners = [];
+
+  constructor() {
+    this.currentUser = this.firebase.auth().currentUser;
+    this._setAuthPersistence();
+  }
+
+  getCurrentUser = () => this.firebase.auth().currentUser;
+
+  signUp = (email, password, onSuccess = () => {}, onError = () => {}) => {
+    if (this.firebase) {
+      this.firebase.auth()
+        .createUserWithEmailAndPassword(email, password)
+        .then(data => {
+          console.log("Log: Auth - Signup success");
+          this._triggerListeners(this.operations.SignUp, data);
+          if (onSuccess) {
+            onSuccess(data);
+          }
+        })
+        .catch(error => {
+          const errorCode = error.code;
+          const errorMessage = error.message;
+          console.log(`Error: Auth Signup - (${errorCode}) ${errorMessage}`);
+          if (onError) {
+            onError(errorMessage);
+          }
+        });
+    }
+  };
+
+  signIn = (email, password, onSuccess = () => {}, onError = () => {}) => {
+    if (this.firebase) {
+      this.firebase.auth()
+        .signInWithEmailAndPassword(email, password)
+        .then(data => {
+          console.log("Log: Auth - Signin success");
+          this._triggerListeners(this.operations.SignIn, data);
+          if (onSuccess) {
+            onSuccess(data);
+          }
+        })
+        .catch(error => {
+          const errorCode = error.code;
+          const errorMessage = error.message;
+          console.log(`Error: Auth Signin - (${errorCode}) ${errorMessage}`);
+          if (onError) {
+            onError(errorMessage);
+          }
+        });
     }
   }
 
-  _getUsername = () => {
-    const urlParams = new URLSearchParams(window.location.search);
-    return urlParams.get("username");
+  signOut = () => {
+    if (this.firebase) {
+      this.firebase.auth().signOut().then(function() {
+        console.log('Log: Auth - Signed Out');
+      }, function(error) {
+        console.error('Error: Auth - Sign Out Error', error);
+      });
+    }
+  };
+
+  onAuthStateChanged = cb => {
+    if (this.firebase) {
+      this.firebase.auth().onAuthStateChanged(user => cb(user));
+    }
+  };
+
+  onSignIn = cb => this.signInListeners.push(cb);
+
+  onSignUp = cb => this.signUpListeners.push(cb);
+
+  _triggerListeners = (operation, data = null) => {
+    var callbacks = [];
+    switch (operation) {
+      case this.operations.SignUp:
+        callbacks = this.signUpListeners;
+        break;
+      case this.operations.SignIn:
+        callbacks = this.signInListeners;
+        break;
+      default:
+        break;
+    }
+    for (const cb of callbacks) {
+      cb(data);
+    }
+  };
+
+  _setAuthPersistence = () => {
+    if (this.firebase) {
+      this.firebase.auth()
+        .setPersistence(this.firebase.auth.Auth.Persistence.LOCAL)
+        .then(() => console.log("Log: Auth persistence set"))
+        .catch(error => {
+          const errorCode = error.code;
+          const errorMessage = error.message;
+          console.log(`Error: Auth Persistence - (${errorCode}) ${errorMessage}`);
+        });
+    }
   }
+}
+
+class App extends React.Component {
+  firebase = global.firebase;
+
+  constructor(props) {
+    super(props);
+    this.state = {
+      currentUser: null,
+      authLoading: true
+    };
+  }
+
+  componentWillMount() {
+    this.service = new FirebaseService(FIREBASE_CONFIG);
+    this.authService = new AuthService();
+    this.authService.onAuthStateChanged(user => {
+      console.log("Auth: Logged in user", user.uid);
+      this._setCurrentUser(user);
+      this.setState({ authLoading: false });
+    });
+  }
+
+  render = () => {
+    const { currentUser, authLoading } = this.state;
+    if (authLoading) {
+      return (
+        <div className="App">
+          <div className="App-header">
+            <View style={{ width: "100%", height: "100%", backgroundColor: "black" }} />
+          </div>
+        </div>
+      );
+    }
+    return (
+      <AppContext.Provider value={{
+        remoteService: this.service,
+        authService: this.authService,
+        currentUser
+      }}>
+        <div className="App">
+          <div className="App-header">
+            <Router>
+              <View style={{ height: Dimensions.get("window").height - 60, width: "100%", display: "flex", alignItems: "center" }}>
+                <Switch>
+                  <Route path="/log">
+                    <LogScreen />
+                  </Route>
+                  <Route path="/goals">
+                    <GoalsScreen />
+                  </Route>
+                  <Route path="/settings">
+                    <SettingsScreen />
+                  </Route>
+                  <Route path="/auth">
+                    <AuthScreen />
+                  </Route>
+                  <Route path="/">
+                    <TimerScreen />
+                  </Route>
+                </Switch>
+              </View>
+              {currentUser === null
+                ? <Redirect to="/auth" />
+                : <Redirect to="/" />
+              }
+              {currentUser !== null ? (
+                <View style={{
+                  borderTop: "1px solid rgb(38,38,38)",
+                  width: "100%",
+                  position: "absolute",
+                  bottom: 0,
+                  backgroundColor: "black",
+                  height: 60,
+                  display: "flex",
+                  alignItems: "center"
+                }}>
+                  <View style={{
+                    width: "100%",
+                    height: "100%",
+                    display: "flex",
+                    flexDirection: "row",
+                    alignItems: "center",
+                    justifyContent: "center"
+                  }}>
+                    <Link to={`log${window.location.search}`}>
+                      <View style={{ height: "100%", paddingHorizontal: 10, width: 80 }}>
+                        <Text style={{ color: "#999999", fontSize: 14 }}>
+                          Log
+                        </Text>
+                      </View>
+                    </Link>
+                    <Link to={`/${window.location.search}`}>
+                      <View style={{ height: "100%", paddingHorizontal: 10, width: 80 }}>
+                        <Text style={{ color: "#999999", fontSize: 14 }}>
+                          Focus
+                        </Text>
+                      </View>
+                    </Link>
+                    <Link to={`goals${window.location.search}`}>
+                      <View style={{ height: "100%", paddingHorizontal: 10, width: 80 }}>
+                        <Text style={{ color: "#999999", fontSize: 14 }}>
+                          Goals
+                        </Text>
+                      </View>
+                    </Link>
+                    <Link to={`settings${window.location.search}`}>
+                      <View style={{ height: "100%", paddingHorizontal: 10, width: 80 }}>
+                        <Text style={{ color: "#999999", fontSize: 14 }}>
+                          Settings
+                        </Text>
+                      </View>
+                    </Link>
+                  </View>
+                </View>
+              ) : null}
+            </Router>
+          </div>
+        </div>
+      </AppContext.Provider>
+    );
+  };
+
+  _setCurrentUser = currentUser => {
+    if (currentUser && currentUser.email) {
+      this.setState({ currentUser: currentUser.email });
+      this.service.setCurrentUser(currentUser);
+    } else {
+      this.setState({ currentUser: null });
+    }
+  };
 }
 
 export default App;

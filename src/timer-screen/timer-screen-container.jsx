@@ -175,4 +175,4 @@ export const TimerScreen = props => (
   <AppContext.Consumer>
     {({ remoteService }) => <TimerScreenContainer {...props} remoteService={remoteService} />}
   </AppContext.Consumer>
-)
+);

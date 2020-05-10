@@ -76,8 +76,11 @@ class GoalsScreenContainer extends React.Component {
   _onSaveGoal = () => {
     const { remoteService } = this.props;
     if (remoteService) {
-      console.log("Devan", this._getCurrentGoal())
-      remoteService.updateGoal(this._getCurrentGoal())
+      if (this.state.id) {
+        remoteService.updateGoal(this._getCurrentGoal());
+      } else {
+        remoteService.addGoal(this._getCurrentGoal());
+      }
     }
   }
 
@@ -86,6 +89,7 @@ class GoalsScreenContainer extends React.Component {
     if (remoteService) {
       const goals = await remoteService.fetchGoals();
       if (goals && goals.length > 0) {
+        console.log(">>>", goals[0])
         this.setState({ goals, ...goals[0] });
       }
     }
