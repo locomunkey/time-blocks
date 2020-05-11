@@ -1,11 +1,24 @@
 import React from "react";
+import moment from "moment";
 import { View, Text, TouchableOpacity } from "react-native";
 import Timer from "../components/timer";
 import TimeBlocks from "../components/time-blocks";
 import GoalUtils from "../utils/goal-utils";
-import { Link , useLocation } from "react-router-dom";
+import { Link } from "react-router-dom";
 
 const isDistracted = false;
+
+const blockDiff = block => {
+  if (!block) {
+    return { hours: 1, minutes: 0, seconds: 0 };
+  }
+  const startTime = moment(block.startTime);
+  const duration = moment.duration(moment().diff(startTime));
+  const hours = Math.floor(duration.asHours());
+  const minutes = Math.floor(duration.asMinutes()) - (hours * 60);
+  const seconds = Math.floor(duration.asSeconds()) - (minutes * 60);
+  return { hours, minutes: 59 - minutes, seconds: 59 - seconds };
+};
 
 const TimerScreenRenderer = ({
   onTimerTick,
@@ -17,80 +30,83 @@ const TimerScreenRenderer = ({
   earnedBlocks,
   currentBlock,
   goal
-}) => (
-  <View style={{ display: "flex", flexDirection: "column", maxWidth: 267, backgroundColor: "black", height: "100%", alignItems: "center", justifyContent: "center" }}>
-    <View style={{ paddingHorizontal: 20, border: "1px solid rgb(38,38,38)", paddingBottom: 15, paddingTop: 5, minHeight: 177 }}>
-      <Timer
-        hours={1}
-        minutes={0}
-        seconds={0}
-        running={running}
-        paused={isDistracted}
-        onTick={onTimerTick}
-        onModify={onTimerModify}
-        onFinish={onTimerFinish}
-      />
-      <Text style={{ color: "#999999", textAlign: "left", fontStyle: "oblique", fontSize: 13 }}>
-        {"Focus on your task for 1 hour to earn "}
-        <Text style={{ color: "white", fontStyle: "oblique" }}>{"1 block"}</Text>
-        <Text style={{ fontWeight: "bold", color: "white", fontStyle: "normal" }}>{" ( "}</Text>
-        <View style={{ height: 10, width: 10, backgroundColor: "rgb(97,196,85)" }} />
-        <Text style={{ fontWeight: "bold", color: "white", fontStyle: "normal" }}>{" )"}</Text>
-      </Text>
-
-      <View style={{ display: "flex", flexDirection: "row", justifyContent: "center", alignItems: "center", marginTop: 10 }}>
-        <Text style={{ color: "#999999" }}>Today's Goal ( </Text>
-        <Link to={`/goals${useLocation().search}`} style={{ marginBottom: 5 }}>
-          <Text style={{ color: "rgb(209,63,87)",  }}>
-            Set
-          </Text>
-        </Link>
-        <Text style={{ color: "#999999" }}> )</Text>
-      </View>
-
-      <View style={{ display: "flex", height: 50, justifyContent: "center", alignItems: "center" }}>
-        {
-          (running || isDistracted) || (GoalUtils.getTodaysBlockGoal(goal) !== 0)
-            ? (
-              <TimeBlocks
-                earnedBlocks={earnedBlocks}
-                currentBlock={currentBlock}
-                goal={goal}
-              />
-            ) : (
-              <View style={{ width: "100%", justifyContent: "center" }}>
-                <Text style={{ color: "#999999" }}>No goal</Text>
-              </View>
-            )
-        }
-      </View>
-    </View>
-    <View style={{ marginVertical: 40 }}>
-      <TouchableOpacity
-        style={{ 
-          backgroundColor: running || isDistracted
-            ? "rgb(28,35,54)"
-            : "rgb(209,63,87)",
-          borderRadius: 80,
-          width: 80,
-          height: 80,
-          display: "flex",
-          justifyContent: "center",
-          shadowColor: 'rgba(0,0,0, .4)',
-          shadowOffset: { height: 1, width: 1 },
-          shadowOpacity: 1,
-          shadowRadius: 1,
-          elevation: 2
-        }}
-        onPress={running || isDistracted ? onTimerStop : onTimerStart}
-      >
-        <Text style={{ fontWeight: "bold", marginBottom: 2, color: "white" }}>
-          {running || isDistracted ? "Give up" : "Start"}
+}) => {
+  const { hours, minutes, seconds } = blockDiff(currentBlock);
+  return (
+    <View style={{ display: "flex", flexDirection: "column", maxWidth: 267, backgroundColor: "black", height: "100%", alignItems: "center", justifyContent: "center" }}>
+      <View style={{ paddingHorizontal: 20, border: "1px solid rgb(38,38,38)", paddingBottom: 15, paddingTop: 5, minHeight: 177 }}>
+        <Timer
+          hours={hours}
+          minutes={minutes}
+          seconds={seconds}
+          running={running}
+          paused={isDistracted}
+          onTick={onTimerTick}
+          onModify={onTimerModify}
+          onFinish={onTimerFinish}
+        />
+        <Text style={{ color: "#999999", textAlign: "left", fontStyle: "oblique", fontSize: 13 }}>
+          {"Focus on your task for 1 hour to earn "}
+          <Text style={{ color: "white", fontStyle: "oblique" }}>{"1 block"}</Text>
+          <Text style={{ fontWeight: "bold", color: "white", fontStyle: "normal" }}>{" ( "}</Text>
+          <View style={{ height: 10, width: 10, backgroundColor: "rgb(97,196,85)" }} />
+          <Text style={{ fontWeight: "bold", color: "white", fontStyle: "normal" }}>{" )"}</Text>
         </Text>
-      </TouchableOpacity>
+
+        <View style={{ display: "flex", flexDirection: "row", justifyContent: "center", alignItems: "center", marginTop: 10 }}>
+          <Text style={{ color: "#999999" }}>Today's Goal ( </Text>
+          <Link to="/goals" style={{ marginBottom: 5 }}>
+            <Text style={{ color: "rgb(209,63,87)",  }}>
+              Set
+            </Text>
+          </Link>
+          <Text style={{ color: "#999999" }}> )</Text>
+        </View>
+
+        <View style={{ display: "flex", height: 50, justifyContent: "center", alignItems: "center" }}>
+          {
+            (running || isDistracted) || (GoalUtils.getTodaysBlockGoal(goal) !== 0)
+              ? (
+                <TimeBlocks
+                  earnedBlocks={earnedBlocks}
+                  currentBlock={currentBlock}
+                  goal={goal}
+                />
+              ) : (
+                <View style={{ width: "100%", justifyContent: "center" }}>
+                  <Text style={{ color: "#999999" }}>No goal</Text>
+                </View>
+              )
+          }
+        </View>
+      </View>
+      <View style={{ marginVertical: 40 }}>
+        <TouchableOpacity
+          style={{ 
+            backgroundColor: running || isDistracted
+              ? "rgb(28,35,54)"
+              : "rgb(209,63,87)",
+            borderRadius: 80,
+            width: 80,
+            height: 80,
+            display: "flex",
+            justifyContent: "center",
+            shadowColor: 'rgba(0,0,0, .4)',
+            shadowOffset: { height: 1, width: 1 },
+            shadowOpacity: 1,
+            shadowRadius: 1,
+            elevation: 2
+          }}
+          onPress={running || isDistracted ? onTimerStop : onTimerStart}
+        >
+          <Text style={{ fontWeight: "bold", marginBottom: 2, color: "white" }}>
+            {running || isDistracted ? "Give up" : "Start"}
+          </Text>
+        </TouchableOpacity>
+      </View>
     </View>
-  </View>
-);
+  );
+};
 
 export default TimerScreenRenderer;
 

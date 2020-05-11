@@ -1,8 +1,13 @@
 import React from "react";
 import moment from "moment";
 import TimerScreenRenderer from "./timer-screen-renderer";
-import TimeBlocks from "../components/time-blocks";
 import AppContext from "../app-context";
+
+const isWithinBlock = block => {
+  const startTime = moment(block.startTime);
+  const duration = moment.duration(moment().diff(startTime));
+  return Math.floor(duration.asHours()) <= 1;
+};
 
 class TimerScreenContainer extends React.Component {
   state = {
@@ -11,6 +16,7 @@ class TimerScreenContainer extends React.Component {
     seconds: 0,
     running: false,
     isDistracted: false,
+    currentBlockId: null,
     currentBlock: null,
     setHours: 1,
     setMinutes: 0,
@@ -41,7 +47,7 @@ class TimerScreenContainer extends React.Component {
     return (
       <TimerScreenRenderer
         onTimerStart={this._startBlock}
-        onTimerStop={() => this._endBlock(false /* completed */, true /* stopped */)}
+        onTimerStop={this._onTimerStop}
         onTimerTick={this._onTimerTick}
         onTimerModify={this._onTimerModify}
         onTimerFinish={this._onTimerFinish}
@@ -53,12 +59,28 @@ class TimerScreenContainer extends React.Component {
     );
   }
 
-  _getNumHourlyBlocksBetweenTimes = (startTime, endTime) => moment.duration(moment(endTime).diff(startTime)).asHours();
+  // _getNumHourlyBlocksBetweenTimes = (startTime, endTime) => moment.duration(moment(endTime).diff(startTime)).asHours();
 
   _fetchBlocks = async () => {
     const { remoteService } = this.props;
     const { todaysBlocks } = await remoteService.fetchBlocks();
     if (todaysBlocks) {
+      const runningBlocks = todaysBlocks
+        .filter(block => !block.stopped)
+        .filter(block => isWithinBlock(block));
+      const sortedBlocks = todaysBlocks
+        .filter(b => b.startTime !== null)
+        .sort((a, b) => moment(a.startTime) - moment(b.startTime));
+      const lastBlock = sortedBlocks[sortedBlocks.length - 1];
+
+      // If there are blocks which are:
+      // 1. Running (stopped = false)
+      // 2. Last started block is not stopped
+      // Set the last block as currentBlock and set the timer running
+      if (runningBlocks.length > 0 && !lastBlock.stopped) {
+        const runningBlock = sortedBlocks[sortedBlocks.length - 1];
+        this.setState({ currentBlock: runningBlock }, () => this.setState({ running: true }));
+      }
       this.setState({ earnedBlocks: todaysBlocks.filter(block => block.completed) });
     }
   };
@@ -86,7 +108,7 @@ class TimerScreenContainer extends React.Component {
           endTime: null,
           completed: false
         }
-      });
+      }, () => this._logTimeBlock(1, 0, 0, false /** completed */, false /** stopped */));
     }
   };
 
@@ -95,11 +117,13 @@ class TimerScreenContainer extends React.Component {
       hours,
       minutes,
       seconds
-      // setHours
-      // setMinutes,
-      // setSeconds
     } = this.state;
-    this.setState({ running: false, isDistracted: false });
+    this.setState({
+      running: false,
+      isDistracted: false,
+      currentBlock: null,
+      currentBlockId: null
+    });
     this._logTimeBlock(
       hours,
       59 - minutes,
@@ -109,17 +133,21 @@ class TimerScreenContainer extends React.Component {
     );
   };
 
-  _onTimerTick = (hours, minutes, seconds) => this.setState({
-    hours,
-    minutes,
-    seconds,
-    currentBlock: {
-      ...this.state.currentBlock,
+  _onTimerStop = () => this._endBlock(false /* completed */, true /* stopped */);
+
+  _onTimerTick = (hours, minutes, seconds) => {
+    this.setState({
       hours,
       minutes,
-      seconds
-    }
-  });
+      seconds,
+      currentBlock: {
+        ...this.state.currentBlock,
+        hours,
+        minutes,
+        seconds
+      }
+    });
+  };
 
   _onTimerModify = ({ hours, minutes, seconds }) => this.setState({
     hours,
@@ -132,26 +160,48 @@ class TimerScreenContainer extends React.Component {
 
   _onTimerFinish = () => this._endBlock(true /* completed */, false /* stopped */);
 
-  _renderEarnedBlocks = blocks => <TimeBlocks blocks={blocks} />;
-
-  _logTimeBlock = (elapsedHours, elapsedMinutes, elapsedSeconds, completed = false, stopped=false) => {
-    const { setHours, setMinutes, setSeconds, currentBlock, goal } = this.state;
+  _logTimeBlock = async (elapsedHours, elapsedMinutes, elapsedSeconds, completed = false, stopped=false) => {
+    const { setHours, setMinutes, setSeconds, currentBlock, goal, currentBlockId } = this.state;
     const { remoteService } = this.props;
     if (remoteService) {
-      remoteService.addTimeBlock({
-        ...currentBlock,
-        hours: setHours,
-        minutes: setMinutes,
-        seconds: setSeconds,
-        elapsedHours,
-        elapsedMinutes,
-        elapsedSeconds,
-        goal,
-        endTime: moment().toISOString(),
-        distractions: this.state.distractions,
-        completed,
-        stopped
-      });
+      if (currentBlockId) {
+        const updatedBlock = await remoteService.updateTimeBlock({
+          ...currentBlock,
+          id: currentBlockId,
+          hours: setHours,
+          minutes: setMinutes,
+          seconds: setSeconds,
+          elapsedHours,
+          elapsedMinutes,
+          elapsedSeconds,
+          goal,
+          endTime: moment().toISOString(),
+          distractions: this.state.distractions,
+          completed,
+          stopped
+        });
+        if (updatedBlock) {
+          this.setState({ currentBlockId: updatedBlock.id });
+        }
+      } else {
+        const addedBlock = await remoteService.addTimeBlock({
+          ...currentBlock,
+          hours: setHours,
+          minutes: setMinutes,
+          seconds: setSeconds,
+          elapsedHours,
+          elapsedMinutes,
+          elapsedSeconds,
+          goal,
+          endTime: moment().toISOString(),
+          distractions: this.state.distractions,
+          completed,
+          stopped
+        });
+        if (addedBlock) {
+          this.setState({ currentBlockId: addedBlock.id });
+        }
+      }
     }
   };
 

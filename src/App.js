@@ -1,5 +1,5 @@
 import React from "react";
-import { View, Text, Dimensions, TouchableOpacity }from "react-native";
+import { View, Text, Dimensions }from "react-native";
 import moment from "moment";
 import {
   BrowserRouter as Router,
@@ -49,6 +49,7 @@ class FirebaseService {
       console.log(`Log: Fetched ${blocks.length} blocks`, blocks);
       const todaysBlocks = blocks
         .filter(block => moment(moment(block.startTime).format(dateFormat)).isSame(moment().format(dateFormat)));
+        console.log(`Log: Fetched ${todaysBlocks.length} today's blocks`, todaysBlocks)
       const startedBlocks = blocks.filter(block => !block.completed);
       const earnedBlocks = blocks.filter(block => block.completed);
       console.log(`Log: Filtered ${startedBlocks.length} started blocks`, startedBlocks);
@@ -72,16 +73,27 @@ class FirebaseService {
     return null;
   };
 
-  addTimeBlock = block => {
+  addTimeBlock = async block => {
     if (this.firebase && this.username) {
-      this.firebase.firestore()
+      const newBlock = await this.firebase.firestore()
         .collection("blocks")
         .add({
           ...block,
           username: this.username
         });
+      console.log("Log: 1 new block created", newBlock);
+      return newBlock;
     }
   };
+
+  updateTimeBlock = block => {
+    if (this.firebase && this.username) {
+      this.firebase.firestore()
+        .collection("blocks")
+        .doc(block.id)
+        .update({ ...block, username: this.username });
+    }
+  }
 
   addGoal = async goal => {
     if (this.firebase && this.username) {
