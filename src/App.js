@@ -126,8 +126,6 @@ class AuthService {
     SignIn: "SignIn",
     SignUp: "SignUp"
   };
-  signInListeners = [];
-  signUpListeners = [];
 
   constructor() {
     this.currentUser = this.firebase.auth().currentUser;
@@ -142,7 +140,6 @@ class AuthService {
         .createUserWithEmailAndPassword(email, password)
         .then(data => {
           console.log("Log: Auth - Signup success");
-          this._triggerListeners(this.operations.SignUp, data);
           if (onSuccess) {
             onSuccess(data);
           }
@@ -164,7 +161,6 @@ class AuthService {
         .signInWithEmailAndPassword(email, password)
         .then(data => {
           console.log("Log: Auth - Signin success");
-          this._triggerListeners(this.operations.SignIn, data);
           if (onSuccess) {
             onSuccess(data);
           }
@@ -193,27 +189,6 @@ class AuthService {
   onAuthStateChanged = cb => {
     if (this.firebase) {
       this.firebase.auth().onAuthStateChanged(user => cb(user));
-    }
-  };
-
-  onSignIn = cb => this.signInListeners.push(cb);
-
-  onSignUp = cb => this.signUpListeners.push(cb);
-
-  _triggerListeners = (operation, data = null) => {
-    var callbacks = [];
-    switch (operation) {
-      case this.operations.SignUp:
-        callbacks = this.signUpListeners;
-        break;
-      case this.operations.SignIn:
-        callbacks = this.signInListeners;
-        break;
-      default:
-        break;
-    }
-    for (const cb of callbacks) {
-      cb(data);
     }
   };
 
@@ -246,7 +221,9 @@ class App extends React.Component {
     this.service = new FirebaseService(FIREBASE_CONFIG);
     this.authService = new AuthService();
     this.authService.onAuthStateChanged(user => {
-      console.log("Auth: Logged in user", user.uid);
+      if (user) {
+        console.log("Auth: Logged in user", user.uid);
+      }
       this._setCurrentUser(user);
       this.setState({ authLoading: false });
     });
