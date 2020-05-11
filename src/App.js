@@ -248,7 +248,7 @@ class App extends React.Component {
       }}>
         <div className="App">
           <div className="App-header">
-            <Router>
+            <Router basename="/time-blocks">
               <View style={{ height: Dimensions.get("window").height - 60, width: "100%", display: "flex", alignItems: "center" }}>
                 <Switch>
                   <Route path="/log">
