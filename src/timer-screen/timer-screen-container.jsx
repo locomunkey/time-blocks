@@ -6,7 +6,7 @@ import AppContext from "../app-context";
 const isWithinBlock = block => {
   const startTime = moment(block.startTime);
   const duration = moment.duration(moment().diff(startTime));
-  return Math.floor(duration.asHours()) <= 1;
+  return Math.floor(duration.asHours()) < 1;
 };
 
 class TimerScreenContainer extends React.Component {
