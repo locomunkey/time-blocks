@@ -48,6 +48,7 @@ class FirebaseService {
       snapshot.forEach(doc => blocks.push({ id: doc.id, ...doc.data() }));
       console.log(`Log: Fetched ${blocks.length} blocks`, blocks);
       const todaysBlocks = blocks
+        .filter(block => block.startTime !== undefined)
         .filter(block => moment(moment(block.startTime).format(dateFormat)).isSame(moment().format(dateFormat)));
         console.log(`Log: Fetched ${todaysBlocks.length} today's blocks`, todaysBlocks)
       const startedBlocks = blocks.filter(block => !block.completed);

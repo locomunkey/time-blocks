@@ -53,6 +53,9 @@ class LogScreenContainer extends React.Component {
     let endDate = null;
 
     for (const block of blocks) {
+      if (!block.startTime) {
+        continue;
+      }
       const dayMoment = moment(block.startTime);
       const dayKey = dayMoment.format("DD MM YYYY");
       const day = days[dayKey];

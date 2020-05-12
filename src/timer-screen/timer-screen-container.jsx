@@ -112,25 +112,25 @@ class TimerScreenContainer extends React.Component {
     }
   };
 
-  _endBlock = (completed = false, stopped = false) => {
+  _endBlock = async (completed = false, stopped = false) => {
     const {
       hours,
       minutes,
       seconds
     } = this.state;
-    this.setState({
-      running: false,
-      isDistracted: false,
-      currentBlock: null,
-      currentBlockId: null
-    });
-    this._logTimeBlock(
+    await this._logTimeBlock(
       hours,
       59 - minutes,
       59 - seconds,
       completed,
       stopped
     );
+    this.setState({
+      running: false,
+      isDistracted: false,
+      currentBlock: null,
+      currentBlockId: null
+    });
   };
 
   _onTimerStop = () => this._endBlock(false /* completed */, true /* stopped */);
