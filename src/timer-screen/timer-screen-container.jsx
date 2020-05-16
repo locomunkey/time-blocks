@@ -79,7 +79,7 @@ class TimerScreenContainer extends React.Component {
       // Set the last block as currentBlock and set the timer running
       if (runningBlocks.length > 0 && !lastBlock.stopped) {
         const runningBlock = sortedBlocks[sortedBlocks.length - 1];
-        this.setState({ currentBlock: runningBlock }, () => this.setState({ running: true }));
+        this.setState({ currentBlock: runningBlock, currentBlockId: runningBlock.id }, () => this.setState({ running: true }));
       }
       this.setState({ earnedBlocks: todaysBlocks.filter(block => block.completed) });
     }
