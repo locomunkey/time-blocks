@@ -68,16 +68,17 @@ class TimerScreenContainer extends React.Component {
       const runningBlocks = todaysBlocks
         .filter(block => !block.stopped)
         .filter(block => isWithinBlock(block));
-      const sortedBlocks = todaysBlocks
+      const sortedBlocks = runningBlocks
         .filter(b => b.startTime !== null)
         .sort((a, b) => moment(a.startTime) - moment(b.startTime));
-      const lastBlock = sortedBlocks[sortedBlocks.length - 1];
-
       // If there are blocks which are:
       // 1. Running (stopped = false)
       // 2. Last started block is not stopped
       // Set the last block as currentBlock and set the timer running
-      if (runningBlocks.length > 0 && !lastBlock.stopped) {
+      const lastBlock = sortedBlocks[sortedBlocks.length - 1];
+      console.log("s>>", sortedBlocks);
+      console.log(">>>", lastBlock);
+      if (runningBlocks.length > 0 && !lastBlock.stopped && !lastBlock.completed) {
         const runningBlock = sortedBlocks[sortedBlocks.length - 1];
         this.setState({ currentBlock: runningBlock, currentBlockId: runningBlock.id }, () => this.setState({ running: true }));
       }
@@ -88,7 +89,7 @@ class TimerScreenContainer extends React.Component {
   _fetchGoals = async () => {
     const { remoteService } = this.props;
     const goals = await remoteService.fetchGoals();
-    if (goals && goals.length) {
+    if (goals && goals.length > 0) {
       this.setState({ goal: goals[0] });
     }
   };
